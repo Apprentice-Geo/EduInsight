@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <title>正在分析...</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        text-align: center;
+        padding-top: 100px;
+      }
+      .loader {
+        border: 8px solid #f3f3f3;
+        border-top: 8px solid #3498db;
+        border-radius: 50%;
+        width: 60px;
+        height: 60px;
+        animation: spin 2s linear infinite;
+        margin: auto;
+      }
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>任务已提交，后台正在全力分析中...</h1>
+    <p>任务ID: {{ job_id }}</p>
+    <div class="loader"></div>
+    <p>请稍候，分析完成后将自动跳转到结果页面。</p>
+
+    <script>
+      const jobId = "{{ job_id }}";
+      const checkStatus = () => {
+        fetch(`/api/status/${jobId}`)
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.status === "completed") {
+              // 如果完成，跳转到结果页
+              window.location.href = `/results/${jobId}`;
+            } else {
+              // 如果还在处理，5秒后再次检查
+              setTimeout(checkStatus, 5000);
+            }
+          })
+          .catch((error) => {
+            console.error("Error checking status:", error);
+            // 出错也继续重试
+            setTimeout(checkStatus, 5000);
+          });
+      };
+
+      // 页面加载后开始检查状态
+      window.onload = checkStatus;
+    </script>
+  </body>
+</html>

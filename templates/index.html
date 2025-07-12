@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <title>学情预警分析系统 MVP</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        max-width: 800px;
+        margin: auto;
+        padding: 20px;
+      }
+      h1 {
+        color: #333;
+      }
+      form {
+        background: #f4f4f4;
+        padding: 20px;
+        border-radius: 8px;
+      }
+      input[type="file"] {
+        margin-bottom: 20px;
+      }
+      input[type="submit"] {
+        background: #007bff;
+        color: white;
+        padding: 10px 15px;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>上传数据文件进行分析</h1>
+    <p>请分别上传学生的行为日志和成绩单文件。</p>
+    <form action="/upload" method="post" enctype="multipart/form-data">
+      <label for="logs_file"><b>学习行为日志 (action_logs.csv):</b></label
+      ><br />
+      <input type="file" name="logs_file" id="logs_file" required /><br /><br />
+
+      <label for="scores_file"><b>测验成绩单 (quiz_scores.csv):</b></label
+      ><br />
+      <input
+        type="file"
+        name="scores_file"
+        id="scores_file"
+        required
+      /><br /><br />
+
+      <input type="submit" value="开始分析" />
+    </form>
+  </body>
+</html>

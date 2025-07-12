@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <title>分析结果 - {{ job_id }}</title>
+    <!-- 引入Pyecharts依赖的ECharts JS库 -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.3.3/dist/echarts.min.js"></script>
+    <style>
+      body {
+        font-family: sans-serif;
+        max-width: 1000px;
+        margin: auto;
+        padding: 20px;
+      }
+      h1,
+      h2 {
+        color: #333;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 10px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+      }
+      th {
+        background-color: #f2f2f2;
+      }
+      .high-risk {
+        color: red;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>学情分析报告 (任务ID: {{ job_id }})</h1>
+
+    <!-- Pyecharts生成的图表将在这里渲染 -->
+    {{ charts_html|safe }}
+
+    <h2>高危预警学生名单</h2>
+    {% if high_risk_students %}
+    <table>
+      <thead>
+        <tr>
+          <th>学生ID</th>
+          <th>分数</th>
+          <th>风险等级</th>
+          <th>总活动次数</th>
+          <th>是否拖延</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for student in high_risk_students %}
+        <tr class="high-risk">
+          <td>{{ student[0] }}</td>
+          <td>{{ student[1] }}</td>
+          <td>{{ student[2] }}</td>
+          <td>{{ student[3] }}</td>
+          <td>{{ '是' if student[4] == 1 else '否' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color: green">太棒了！本次分析没有发现高危学生。</p>
+    {% endif %}
+    <br />
+    <a href="/">返回主页，开始新的分析</a>
+  </body>
+</html>
