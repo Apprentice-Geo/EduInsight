@@ -1,0 +1,67 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Virtual environments
+venv/
+env/
+.venv/
+.env/
+
+# Logs
+*.log
+logs/
+
+# VSCode settings
+.vscode/
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# macOS 系统文件
+.DS_Store
+
+# Windows 系统文件
+Thumbs.db
+desktop.ini
+
+# SQLite 数据库
+*.sqlite3
+*.db
+
+# Pipenv
+Pipfile.lock
+
+# Pytest
+.cache/
+.pytest_cache/
+
+# MyPy
+.mypy_cache/
+
+# Coverage
+htmlcov/
+.coverage
+coverage.xml
+*.cover
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Spyder IDE
+.spyderproject
+.spyproject
+
+# PyCharm
+.idea/
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
