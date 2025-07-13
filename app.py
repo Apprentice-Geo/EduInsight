@@ -9,7 +9,7 @@ import time
 
 # --- 配置 ---
 # 填入Spark Driver的IP地址
-SPARK_DRIVER_HOST = "192.168.30.93" 
+SPARK_DRIVER_HOST = "192.168.81.22" 
 
 # 确保这些路径存在
 UPLOAD_FOLDER = '/tmp/spark_uploads'
@@ -97,7 +97,8 @@ def show_results(job_id):
     try:
         conn = sqlite3.connect(DB_PATH)
         cursor = conn.cursor()
-        cursor.execute(f"SELECT student_id, score, warning_level, total_actions, is_procrastinator FROM {table_name} ORDER BY score DESC")
+        # 查询增强后的数据字段
+        cursor.execute(f"SELECT student_id, score, total_actions, is_procrastinator, cluster, warning_level, cluster_risk_level, comprehensive_warning FROM {table_name} ORDER BY score DESC")
         rows = cursor.fetchall()
         conn.close()
     except Exception as e:
@@ -106,46 +107,73 @@ def show_results(job_id):
     # --- 数据准备 ---
     student_ids = [row[0] for row in rows]
     scores = [row[1] for row in rows]
-    warning_levels = [row[2] for row in rows]
-    high_risk_students = [row for row in rows if row[2] == 'High Risk']
+    clusters = [row[4] for row in rows]
+    comprehensive_warnings = [row[7] for row in rows]
+    
+    # 高风险学生（基于综合预警）
+    high_risk_students = [row for row in rows if row[7] == 'High Risk']
+    medium_risk_students = [row for row in rows if row[7] == 'Medium Risk']
     
     # --- Pyecharts 绘图 ---
     
-    # 1. 成绩分布柱状图
-    bar = (
-        Bar({"width": "100%", "height": "400px"})
-        .add_xaxis(student_ids)
-        .add_yaxis("学生成绩", scores)
-        .set_global_opts(
-            title_opts=opts.TitleOpts(title="学生成绩分布"),
-            datazoom_opts=opts.DataZoomOpts(type_="inside"),
-        )
+    # 1. 成绩分布柱状图（按聚类着色）
+    # 为不同聚类准备不同颜色的数据
+    cluster_colors = {0: "#5470c6", 1: "#91cc75", 2: "#fac858"}
+    cluster_data = {}
+    for i, (student_id, score, cluster) in enumerate(zip(student_ids, scores, clusters)):
+        if cluster not in cluster_data:
+            cluster_data[cluster] = {"students": [], "scores": []}
+        cluster_data[cluster]["students"].append(student_id)
+        cluster_data[cluster]["scores"].append(score)
+    
+    bar = Bar({"width": "100%", "height": "400px"})
+    bar.add_xaxis(student_ids)
+    bar.add_yaxis("学生成绩", scores)
+    bar.set_global_opts(
+        title_opts=opts.TitleOpts(title="学生成绩分布（聚类分析）"),
+        datazoom_opts=opts.DataZoomOpts(type_="inside"),
     )
 
-    # 2. 风险等级分布饼图
-    level_counts = {"High Risk": 0, "Normal": 0}
-    for level in warning_levels:
-        level_counts[level] += 1
+    # 2. 综合风险等级分布饼图
+    risk_counts = {"High Risk": 0, "Medium Risk": 0, "Low Risk": 0}
+    for warning in comprehensive_warnings:
+        risk_counts[warning] += 1
     
-    pie_data = list(level_counts.items())
+    pie_data = [(k, v) for k, v in risk_counts.items() if v > 0]
     pie = (
         Pie({"width": "100%", "height": "400px"})
         .add("", pie_data)
-        .set_global_opts(title_opts=opts.TitleOpts(title="学生风险等级分布"))
+        .set_global_opts(title_opts=opts.TitleOpts(title="学生综合风险等级分布"))
+        .set_series_opts(label_opts=opts.LabelOpts(formatter="{b}: {c}"))
+    )
+    
+    # 3. 聚类分布饼图
+    cluster_counts = {}
+    for cluster in clusters:
+        cluster_name = f"聚类 {cluster}"
+        cluster_counts[cluster_name] = cluster_counts.get(cluster_name, 0) + 1
+    
+    cluster_pie_data = list(cluster_counts.items())
+    cluster_pie = (
+        Pie({"width": "100%", "height": "400px"})
+        .add("", cluster_pie_data)
+        .set_global_opts(title_opts=opts.TitleOpts(title="学生聚类分布"))
         .set_series_opts(label_opts=opts.LabelOpts(formatter="{b}: {c}"))
     )
 
     # 使用Page布局来组合图表
     page = Page(layout=Page.SimplePageLayout)
-    page.add(bar, pie)
+    page.add(bar, pie, cluster_pie)
     
     return render_template(
         'results.html', 
         charts_html=page.render_embed(),
         high_risk_students=high_risk_students,
+        medium_risk_students=medium_risk_students,
+        total_students=len(rows),
         job_id=job_id
     )
 
 if __name__ == '__main__':
     # 确保在局域网内可访问
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=5010, debug=True)

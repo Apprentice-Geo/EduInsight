@@ -44,6 +44,14 @@
     <!-- Pyecharts生成的图表将在这里渲染 -->
     {{ charts_html|safe }}
 
+    <h2>智能分析摘要</h2>
+    <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+      <p><strong>总学生数:</strong> {{ total_students }}</p>
+      <p><strong>高风险学生:</strong> {{ high_risk_students|length }} 人</p>
+      <p><strong>中等风险学生:</strong> {{ medium_risk_students|length }} 人</p>
+      <p><strong>低风险学生:</strong> {{ total_students - high_risk_students|length - medium_risk_students|length }} 人</p>
+    </div>
+
     <h2>高危预警学生名单</h2>
     {% if high_risk_students %}
     <table>
@@ -51,9 +59,12 @@
         <tr>
           <th>学生ID</th>
           <th>分数</th>
-          <th>风险等级</th>
           <th>总活动次数</th>
           <th>是否拖延</th>
+          <th>聚类</th>
+          <th>传统预警</th>
+          <th>聚类风险</th>
+          <th>综合预警</th>
         </tr>
       </thead>
       <tbody>
@@ -62,14 +73,51 @@
           <td>{{ student[0] }}</td>
           <td>{{ student[1] }}</td>
           <td>{{ student[2] }}</td>
-          <td>{{ student[3] }}</td>
-          <td>{{ '是' if student[4] == 1 else '否' }}</td>
+          <td>{{ '是' if student[3] == 1 else '否' }}</td>
+          <td>聚类 {{ student[4] }}</td>
+          <td>{{ student[5] }}</td>
+          <td>{{ student[6] }}</td>
+          <td>{{ student[7] }}</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
     {% else %}
     <p style="color: green">太棒了！本次分析没有发现高危学生。</p>
+    {% endif %}
+    
+    <h2>中等风险学生名单</h2>
+    {% if medium_risk_students %}
+    <table>
+      <thead>
+        <tr>
+          <th>学生ID</th>
+          <th>分数</th>
+          <th>总活动次数</th>
+          <th>是否拖延</th>
+          <th>聚类</th>
+          <th>传统预警</th>
+          <th>聚类风险</th>
+          <th>综合预警</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for student in medium_risk_students %}
+        <tr style="color: orange;">
+          <td>{{ student[0] }}</td>
+          <td>{{ student[1] }}</td>
+          <td>{{ student[2] }}</td>
+          <td>{{ '是' if student[3] == 1 else '否' }}</td>
+          <td>聚类 {{ student[4] }}</td>
+          <td>{{ student[5] }}</td>
+          <td>{{ student[6] }}</td>
+          <td>{{ student[7] }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <p style="color: blue">没有发现中等风险学生。</p>
     {% endif %}
     <br />
     <a href="/">返回主页，开始新的分析</a>
