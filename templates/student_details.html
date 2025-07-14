@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <title>学生详细信息 - {{ username }}</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        max-width: 1400px;
+        margin: auto;
+        padding: 20px;
+        background: #f8f9fa;
+      }
+      .header {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .header h1 {
+        margin: 0;
+        color: #333;
+        font-size: 28px;
+      }
+      .user-info {
+        color: #666;
+        font-size: 16px;
+      }
+      .nav-buttons {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+      .nav-button {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        padding: 12px 20px;
+        text-decoration: none;
+        border-radius: 8px;
+        font-weight: bold;
+        font-size: 14px;
+        transition: transform 0.2s;
+        box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+      }
+      .nav-button:hover {
+        transform: translateY(-2px);
+      }
+      .section {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+      }
+      h2 {
+        color: #333;
+        border-bottom: 2px solid #007bff;
+        padding-bottom: 10px;
+        margin-top: 0;
+      }
+      .filter-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+      .filter-tab {
+        padding: 10px 20px;
+        background: #e9ecef;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: all 0.3s;
+      }
+      .filter-tab.active {
+        background: #007bff;
+        color: white;
+      }
+      .filter-tab:hover {
+        background: #0056b3;
+        color: white;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+      }
+      th,
+      td {
+        border: 1px solid #ddd;
+        padding: 12px 8px;
+        text-align: left;
+      }
+      th {
+        background-color: #f8f9fa;
+        font-weight: bold;
+        color: #495057;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+      .high-risk {
+        background-color: #f8d7da;
+        color: #721c24;
+      }
+      .medium-risk {
+        background-color: #fff3cd;
+        color: #856404;
+      }
+      .low-risk {
+        background-color: #d1e7dd;
+        color: #0f5132;
+      }
+      .search-box {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        font-size: 16px;
+        margin-bottom: 20px;
+      }
+      .search-box:focus {
+        border-color: #007bff;
+        outline: none;
+      }
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 20px;
+      }
+      .stat-card {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      }
+      .stat-number {
+        font-size: 24px;
+        font-weight: bold;
+        color: #1976d2;
+      }
+      .stat-label {
+        font-size: 14px;
+        color: #666;
+        margin-top: 5px;
+      }
+      .export-button {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: transform 0.2s;
+        margin-right: 10px;
+      }
+      .export-button:hover {
+        transform: translateY(-2px);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <h1>📋 学生详细信息</h1>
+      <div class="user-info"><strong>{{ username }}</strong> 的分析数据</div>
+    </div>
+
+    <div class="nav-buttons">
+      <a
+        href="{{ url_for('show_results', user_id=user_id) }}"
+        class="nav-button"
+      >
+        📊 返回图表概览
+      </a>
+      <a href="{{ url_for('index') }}" class="nav-button"> 🏠 返回主页 </a>
+    </div>
+
+    <div class="section">
+      <h2>📈 数据统计概览</h2>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-number">{{ total_students }}</div>
+          <div class="stat-label">总学生数</div>
+        </div>
+        <div
+          class="stat-card"
+          style="background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%)"
+        >
+          <div class="stat-number" style="color: #d32f2f">
+            {{ high_risk_students|length }}
+          </div>
+          <div class="stat-label">高风险学生</div>
+        </div>
+        <div
+          class="stat-card"
+          style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%)"
+        >
+          <div class="stat-number" style="color: #f57c00">
+            {{ medium_risk_students|length }}
+          </div>
+          <div class="stat-label">中等风险学生</div>
+        </div>
+        <div
+          class="stat-card"
+          style="background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%)"
+        >
+          <div class="stat-number" style="color: #388e3c">
+            {{ total_students - high_risk_students|length -
+            medium_risk_students|length }}
+          </div>
+          <div class="stat-label">低风险学生</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>🔍 学生数据筛选与查看</h2>
+
+      <div class="filter-tabs">
+        <button class="filter-tab active" onclick="filterStudents('all')">
+          全部学生
+        </button>
+        <button class="filter-tab" onclick="filterStudents('high')">
+          高风险学生
+        </button>
+        <button class="filter-tab" onclick="filterStudents('medium')">
+          中等风险学生
+        </button>
+        <button class="filter-tab" onclick="filterStudents('low')">
+          低风险学生
+        </button>
+      </div>
+
+      <input
+        type="text"
+        class="search-box"
+        id="searchBox"
+        placeholder="🔍 输入学生ID搜索..."
+        onkeyup="searchStudents()"
+      />
+
+      <div style="margin-bottom: 15px">
+        <button class="export-button" onclick="exportToCSV()">
+          📄 导出为CSV
+        </button>
+        <span style="color: #666; font-size: 14px"
+          >当前显示:
+          <span id="currentCount">{{ total_students }}</span> 名学生</span
+        >
+      </div>
+
+      <div
+        style="
+          max-height: 600px;
+          overflow-y: auto;
+          border: 1px solid #ddd;
+          border-radius: 8px;
+        "
+      >
+        <table id="studentsTable">
+          <thead>
+            <tr>
+              <th>学生ID</th>
+              <th>最近得分</th>
+              <th>历史平均分</th>
+              <th>分数趋势</th>
+              <th>总活动次数</th>
+              <th>是否拖延</th>
+              <th>聚类</th>
+              <th>综合预警</th>
+            </tr>
+          </thead>
+          <tbody id="studentsTableBody">
+            {% for student in all_students_data %}
+            <tr
+              class="student-row {% if student.comprehensive_warning == 'High Risk' %}high-risk{% elif student.comprehensive_warning == 'Medium Risk' %}medium-risk{% else %}low-risk{% endif %}"
+              data-risk="{{ student.comprehensive_warning }}"
+              data-student-id="{{ student.student_id }}"
+            >
+              <td><strong>{{ student.student_id }}</strong></td>
+              <td>{{ "%.2f"|format(student.latest_score) }}</td>
+              <td>
+                {{ "%.2f"|format(student.historical_avg_score) if
+                student.historical_avg_score is not none else 'N/A' }}
+              </td>
+              <td>{{ "%.2f"|format(student.score_trend) }}</td>
+              <td>{{ student.total_actions }}</td>
+              <td>{{ '是' if student.is_procrastinator == 1 else '否' }}</td>
+              <td>聚类 {{ student.cluster }}</td>
+              <td>
+                {% if student.comprehensive_warning == 'High Risk' %}
+                <span style="font-weight: bold; color: #d32f2f"
+                  >{{ student.comprehensive_warning }}</span
+                >
+                {% elif student.comprehensive_warning == 'Medium Risk' %}
+                <span style="font-weight: bold; color: #f57c00"
+                  >{{ student.comprehensive_warning }}</span
+                >
+                {% else %}
+                <span style="font-weight: bold; color: #388e3c"
+                  >{{ student.comprehensive_warning }}</span
+                >
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <script>
+      function filterStudents(type) {
+        const rows = document.querySelectorAll(".student-row");
+        const tabs = document.querySelectorAll(".filter-tab");
+        let count = 0;
+
+        // 更新选中状态
+        tabs.forEach((tab) => tab.classList.remove("active"));
+        event.target.classList.add("active");
+
+        rows.forEach((row) => {
+          const risk = row.getAttribute("data-risk");
+          let show = false;
+
+          switch (type) {
+            case "all":
+              show = true;
+              break;
+            case "high":
+              show = risk === "High Risk";
+              break;
+            case "medium":
+              show = risk === "Medium Risk";
+              break;
+            case "low":
+              show = risk !== "High Risk" && risk !== "Medium Risk";
+              break;
+          }
+
+          if (show) {
+            row.style.display = "";
+            count++;
+          } else {
+            row.style.display = "none";
+          }
+        });
+
+        document.getElementById("currentCount").textContent = count;
+      }
+
+      function searchStudents() {
+        const searchText = document
+          .getElementById("searchBox")
+          .value.toLowerCase();
+        const rows = document.querySelectorAll(".student-row");
+        let count = 0;
+
+        rows.forEach((row) => {
+          const studentId = row.getAttribute("data-student-id").toLowerCase();
+          if (studentId.includes(searchText)) {
+            row.style.display = "";
+            count++;
+          } else {
+            row.style.display = "none";
+          }
+        });
+
+        document.getElementById("currentCount").textContent = count;
+      }
+
+      function exportToCSV() {
+        const table = document.getElementById("studentsTable");
+        const rows = table.querySelectorAll("tr");
+        let csv = [];
+
+        rows.forEach((row) => {
+          if (row.style.display !== "none") {
+            const cols = row.querySelectorAll("td, th");
+            const rowData = Array.from(cols).map((col) => {
+              return '"' + col.textContent.replace(/"/g, '""') + '"';
+            });
+            csv.push(rowData.join(","));
+          }
+        });
+
+        const csvContent = csv.join("\n");
+        const blob = new Blob([csvContent], {
+          type: "text/csv;charset=utf-8;",
+        });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", "student_analysis_{{ user_id }}.csv");
+        link.style.visibility = "hidden";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    </script>
+  </body>
+</html>

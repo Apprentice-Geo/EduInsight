@@ -185,6 +185,36 @@ def show_results(user_id):
         username=current_user['username']
     )
 
+@app.route('/student_details/<user_id>')
+@login_required
+def student_details(user_id):
+    """显示学生详细信息页面"""
+    # 验证用户权限
+    if str(session['user_id']) != user_id:
+        flash('您只能查看自己的分析结果', 'error')
+        return redirect(url_for('index'))
+    
+    # 获取分析结果
+    results = analysis_model.get_user_results(user_id)
+    if not results:
+        flash('分析结果不存在，请重新上传文件进行分析', 'error')
+        return redirect(url_for('index'))
+    
+    # 分类学生
+    high_risk_students = [item for item in results if item['comprehensive_warning'] == 'High Risk']
+    medium_risk_students = [item for item in results if item['comprehensive_warning'] == 'Medium Risk']
+    
+    current_user = auth_manager.get_current_user()
+    return render_template(
+        'student_details.html',
+        high_risk_students=high_risk_students,
+        medium_risk_students=medium_risk_students,
+        all_students_data=results,
+        total_students=len(results),
+        user_id=user_id,
+        username=current_user['username']
+    )
+
 # --- 认证相关路由 ---
 
 @app.route('/login', methods=['GET', 'POST'])
