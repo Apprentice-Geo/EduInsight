@@ -47,9 +47,9 @@ def upload_and_run_spark():
     user_id = str(session['user_id'])
     username = session['username']
     
-    # 清理该用户之前的分析结果
+    # 清理该用户之前的分析结果（仅清理SQLite结果，保留HDFS历史数据）
     analysis_model.clear_user_results(user_id)
-    print(f"Cleared previous results for user {user_id} ({username})")
+    print(f"Cleared previous analysis results for user {user_id} ({username}), keeping HDFS historical data")
 
     # 1. 保存上传的文件到本地临时目录
     local_logs_path = os.path.join(Config.UPLOAD_FOLDER, f"{user_id}_logs.csv")
@@ -57,12 +57,11 @@ def upload_and_run_spark():
     logs_file.save(local_logs_path)
     scores_file.save(local_scores_path)
 
-    # 2. 清理HDFS数据并上传新文件
-    HDFSHelper.clean_user_data(user_id)
-    
+    # 2. 上传文件到HDFS（保留历史数据）
     hdfs_input_path = f"{Config.HDFS_JOB_BASE_PATH}/{user_id}/input/{time.time()}"
     try:
         HDFSHelper.upload_files_with_retry(local_logs_path, local_scores_path, hdfs_input_path)
+        print(f"Successfully uploaded files to HDFS: {hdfs_input_path} (historical data preserved)")
     except Exception as e:
         flash(f"上传文件到HDFS失败: {e}。请联系管理员。", 'error')
         return redirect(url_for('index'))
@@ -76,7 +75,6 @@ def upload_and_run_spark():
     print(f"Executing Spark command for user {username} (ID: {user_id}): {' '.join(spark_submit_cmd)}")
     subprocess.Popen(spark_submit_cmd)
 
-    flash('文件上传成功，正在进行分析...', 'info')
     return redirect(url_for('waiting_page', user_id=user_id))
 
 @app.route('/waiting/<user_id>')
@@ -122,11 +120,11 @@ def show_results(user_id):
     # 获取风险统计
     risk_stats = analysis_model.get_risk_statistics(user_id)
 
-    # --- 数据准备 ---
+    # --- 数据准备（保留两位小数）---
     student_ids = [item['student_id'] for item in results]
-    latest_scores = [item['latest_score'] for item in results]
-    historical_avg_scores = [item['historical_avg_score'] or 0 for item in results]
-    score_trends = [item['score_trend'] for item in results]
+    latest_scores = [round(float(item['latest_score']), 2) if item['latest_score'] is not None else 0.00 for item in results]
+    historical_avg_scores = [round(float(item['historical_avg_score']), 2) if item['historical_avg_score'] is not None else 0.00 for item in results]
+    score_trends = [round(float(item['score_trend']), 2) if item['score_trend'] is not None else 0.00 for item in results]
     clusters = [item['cluster'] for item in results]
     comprehensive_warnings = [item['comprehensive_warning'] for item in results]
     
@@ -144,6 +142,18 @@ def show_results(user_id):
     bar.set_global_opts(
         title_opts=opts.TitleOpts(title="学生分数与历史趋势对比"),
         datazoom_opts=opts.DataZoomOpts(type_="inside"),
+        tooltip_opts=opts.TooltipOpts(
+            trigger="axis",
+            axis_pointer_type="cross",
+            formatter="{b}<br/>{a0}: {c0}<br/>{a1}: {c1}"
+        )
+    )
+    bar.set_series_opts(
+        label_opts=opts.LabelOpts(
+            is_show=True,
+            position="top",
+            formatter="{c}"
+        )
     )
 
     # 2. 综合风险等级分布饼图
