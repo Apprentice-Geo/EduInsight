@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <title>注册 - 学情预警分析系统</title>
+    <style>
+      body {
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        max-width: 400px;
+        margin: 100px auto;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+      }
+      .register-container {
+        background: white;
+        padding: 40px;
+        border-radius: 15px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        color: #333;
+        text-align: center;
+        margin-bottom: 30px;
+        font-size: 24px;
+      }
+      .form-group {
+        margin-bottom: 20px;
+      }
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #555;
+      }
+      input[type="text"],
+      input[type="email"],
+      input[type="password"] {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        box-sizing: border-box;
+        font-size: 16px;
+        transition: border-color 0.3s;
+      }
+      input[type="text"]:focus,
+      input[type="email"]:focus,
+      input[type="password"]:focus {
+        outline: none;
+        border-color: #667eea;
+      }
+      input[type="submit"] {
+        width: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 14px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        transition: transform 0.2s;
+      }
+      input[type="submit"]:hover {
+        transform: translateY(-2px);
+      }
+      .login-link {
+        text-align: center;
+        margin-top: 20px;
+      }
+      .login-link a {
+        color: #667eea;
+        text-decoration: none;
+        font-weight: bold;
+      }
+      .login-link a:hover {
+        text-decoration: underline;
+      }
+      .flash-messages {
+        margin-bottom: 20px;
+      }
+      .flash-message {
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        font-weight: bold;
+      }
+      .flash-error {
+        background: #fee;
+        color: #c33;
+        border: 2px solid #fcc;
+      }
+      .flash-success {
+        background: #efe;
+        color: #363;
+        border: 2px solid #cfc;
+      }
+      .flash-info {
+        background: #eef;
+        color: #336;
+        border: 2px solid #ccf;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="register-container">
+      <h1>🎓 用户注册</h1>
+
+      <div class="flash-messages">
+        {% with messages = get_flashed_messages(with_categories=true) %} {% if
+        messages %} {% for category, message in messages %}
+        <div class="flash-message flash-{{ category }}">{{ message }}</div>
+        {% endfor %} {% endif %} {% endwith %}
+      </div>
+
+      <form method="post">
+        <div class="form-group">
+          <label for="username">用户名:</label>
+          <input
+            type="text"
+            name="username"
+            id="username"
+            required
+            placeholder="请输入用户名"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="email">邮箱:</label>
+          <input
+            type="email"
+            name="email"
+            id="email"
+            required
+            placeholder="请输入邮箱地址"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="password">密码:</label>
+          <input
+            type="password"
+            name="password"
+            id="password"
+            required
+            placeholder="请输入密码"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="confirm_password">确认密码:</label>
+          <input
+            type="password"
+            name="confirm_password"
+            id="confirm_password"
+            required
+            placeholder="请再次输入密码"
+          />
+        </div>
+
+        <input type="submit" value="注册" />
+      </form>
+
+      <div class="login-link">
+        <p>已有账户？<a href="{{ url_for('login') }}">立即登录</a></p>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,145 +1,153 @@
-from flask import Flask, render_template, request, redirect, url_for, jsonify
+from flask import Flask, render_template, request, redirect, url_for, jsonify, session, flash
 import os
 import subprocess
-import uuid
-import sqlite3
+import time
 from pyecharts import options as opts
 from pyecharts.charts import Bar, Pie, Page
-import time
 
-# --- 配置 ---
-# 填入Spark Driver的IP地址
-SPARK_DRIVER_HOST = "192.168.81.22" 
-
-# 确保这些路径存在
-UPLOAD_FOLDER = '/tmp/spark_uploads'
-DB_PATH = "/home/spark/teaching_analysis.db" # SQLite数据库文件路径
-HDFS_JOB_BASE_PATH = "/user/spark/jobs"
+# 导入新的模块
+from config import Config
+from auth import AuthManager, login_required
+from models.analysis import AnalysisResult
+from utils.hdfs_helper import HDFSHelper
+from utils.validators import validate_upload_files
 
 # --- Flask应用初始化 ---
 app = Flask(__name__)
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+app.secret_key = Config.SECRET_KEY
+Config.init_app(app)
+
+# 初始化管理器
+auth_manager = AuthManager()
+analysis_model = AnalysisResult()
 
 # --- 路由定义 ---
 
 @app.route('/')
+@login_required
 def index():
-    """主页，提供文件上传表单。"""
-    return render_template('index.html')
+    """主页，提供文件上传表单"""
+    current_user = auth_manager.get_current_user()
+    return render_template('index.html', username=current_user['username'])
 
 @app.route('/upload', methods=['POST'])
+@login_required
 def upload_and_run_spark():
-    """处理文件上传并异步启动Spark任务。"""
-    if 'logs_file' not in request.files or 'scores_file' not in request.files:
-        return "错误：请确保两个文件都已选择！", 400
+    """处理文件上传并异步启动Spark任务"""
+    # 验证上传的文件
+    is_valid, error_message = validate_upload_files(request.files)
+    if not is_valid:
+        flash(error_message, 'error')
+        return redirect(url_for('index'))
 
     logs_file = request.files['logs_file']
     scores_file = request.files['scores_file']
+
+    # 使用当前登录用户的ID
+    user_id = str(session['user_id'])
+    username = session['username']
     
-    job_id = str(uuid.uuid4())
-    
+    # 清理该用户之前的分析结果
+    analysis_model.clear_user_results(user_id)
+    print(f"Cleared previous results for user {user_id} ({username})")
+
     # 1. 保存上传的文件到本地临时目录
-    local_logs_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{job_id}_logs.csv")
-    local_scores_path = os.path.join(app.config['UPLOAD_FOLDER'], f"{job_id}_scores.csv")
+    local_logs_path = os.path.join(Config.UPLOAD_FOLDER, f"{user_id}_logs.csv")
+    local_scores_path = os.path.join(Config.UPLOAD_FOLDER, f"{user_id}_scores.csv")
     logs_file.save(local_logs_path)
     scores_file.save(local_scores_path)
 
-    # 2. 将本地文件上传到HDFS的专属任务目录
-    hdfs_input_path = f"{HDFS_JOB_BASE_PATH}/{job_id}/input"
+    # 2. 清理HDFS数据并上传新文件
+    HDFSHelper.clean_user_data(user_id)
+    
+    hdfs_input_path = f"{Config.HDFS_JOB_BASE_PATH}/{user_id}/input/{time.time()}"
     try:
-        subprocess.run(['hdfs', 'dfs', '-mkdir', '-p', hdfs_input_path], check=True)
-        subprocess.run(['hdfs', 'dfs', '-put', local_logs_path, f"{hdfs_input_path}/action_logs.csv"], check=True)
-        subprocess.run(['hdfs', 'dfs', '-put', local_scores_path, f"{hdfs_input_path}/quiz_scores.csv"], check=True)
-    except subprocess.CalledProcessError as e:
-        return f"上传文件到HDFS失败: {e}", 500
+        HDFSHelper.upload_files_with_retry(local_logs_path, local_scores_path, hdfs_input_path)
+    except Exception as e:
+        flash(f"上传文件到HDFS失败: {e}。请联系管理员。", 'error')
+        return redirect(url_for('index'))
 
-    # 3. 准备并异步启动spark-submit命令
+    # 3. 启动Spark任务
     spark_submit_cmd = [
         "spark-submit", "--master", "yarn", "--deploy-mode", "client",
-        "--conf", f"spark.driver.host={SPARK_DRIVER_HOST}",
-        "AcademicWarning.py", job_id, DB_PATH
+        "--conf", f"spark.driver.host={Config.SPARK_DRIVER_HOST}",
+        "AcademicWarning.py", user_id, Config.DB_PATH
     ]
-    print(f"Executing Spark command: {' '.join(spark_submit_cmd)}")
+    print(f"Executing Spark command for user {username} (ID: {user_id}): {' '.join(spark_submit_cmd)}")
     subprocess.Popen(spark_submit_cmd)
 
-    # 4. 重定向到等待页面
-    return redirect(url_for('waiting_page', job_id=job_id))
+    flash('文件上传成功，正在进行分析...', 'info')
+    return redirect(url_for('waiting_page', user_id=user_id))
 
-@app.route('/waiting/<job_id>')
-def waiting_page(job_id):
-    """显示一个等待页面，它会用JavaScript轮询检查结果。"""
-    return render_template('waiting.html', job_id=job_id)
+@app.route('/waiting/<user_id>')
+@login_required
+def waiting_page(user_id):
+    """显示等待页面"""
+    # 验证用户权限
+    if str(session['user_id']) != user_id:
+        flash('您只能查看自己的分析结果', 'error')
+        return redirect(url_for('index'))
+    
+    current_user = auth_manager.get_current_user()
+    return render_template('waiting.html', user_id=user_id, username=current_user['username'])
 
-@app.route('/api/status/<job_id>')
-def check_status(job_id):
-    """一个API端点，用于检查任务是否完成。"""
-    table_name = f"job_{job_id.replace('-', '_')}"
-    try:
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-        # 检查对应的表是否存在
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
-        if cursor.fetchone():
-            conn.close()
-            return jsonify({"status": "completed"})
-        else:
-            conn.close()
-            return jsonify({"status": "processing"})
-    except Exception:
+@app.route('/api/status/<user_id>')
+@login_required
+def check_status(user_id):
+    """检查任务状态"""
+    # 验证用户权限
+    if str(session['user_id']) != user_id:
+        return jsonify({"status": "error", "message": "权限不足"})
+    
+    if analysis_model.table_exists(user_id):
+        return jsonify({"status": "completed"})
+    else:
         return jsonify({"status": "processing"})
 
-
-@app.route('/results/<job_id>')
-def show_results(job_id):
-    """查询结果并用Pyecharts渲染图表。"""
-    table_name = f"job_{job_id.replace('-', '_')}"
-    try:
-        conn = sqlite3.connect(DB_PATH)
-        cursor = conn.cursor()
-        # 查询增强后的数据字段
-        cursor.execute(f"SELECT student_id, score, total_actions, is_procrastinator, cluster, warning_level, cluster_risk_level, comprehensive_warning FROM {table_name} ORDER BY score DESC")
-        rows = cursor.fetchall()
-        conn.close()
-    except Exception as e:
-        return f"查询结果失败，任务可能仍在运行或已失败。错误: {e}"
+@app.route('/results/<user_id>')
+@login_required
+def show_results(user_id):
+    """显示分析结果"""
+    # 验证用户权限
+    if str(session['user_id']) != user_id:
+        flash('您只能查看自己的分析结果', 'error')
+        return redirect(url_for('index'))
+    
+    # 获取分析结果
+    results = analysis_model.get_user_results(user_id)
+    if not results:
+        flash('分析结果不存在，请重新上传文件进行分析', 'error')
+        return redirect(url_for('index'))
+    
+    # 获取风险统计
+    risk_stats = analysis_model.get_risk_statistics(user_id)
 
     # --- 数据准备 ---
-    student_ids = [row[0] for row in rows]
-    scores = [row[1] for row in rows]
-    clusters = [row[4] for row in rows]
-    comprehensive_warnings = [row[7] for row in rows]
+    student_ids = [item['student_id'] for item in results]
+    latest_scores = [item['latest_score'] for item in results]
+    historical_avg_scores = [item['historical_avg_score'] or 0 for item in results]
+    score_trends = [item['score_trend'] for item in results]
+    clusters = [item['cluster'] for item in results]
+    comprehensive_warnings = [item['comprehensive_warning'] for item in results]
     
     # 高风险学生（基于综合预警）
-    high_risk_students = [row for row in rows if row[7] == 'High Risk']
-    medium_risk_students = [row for row in rows if row[7] == 'Medium Risk']
+    high_risk_students = [item for item in results if item['comprehensive_warning'] == 'High Risk']
+    medium_risk_students = [item for item in results if item['comprehensive_warning'] == 'Medium Risk']
     
     # --- Pyecharts 绘图 ---
     
-    # 1. 成绩分布柱状图（按聚类着色）
-    # 为不同聚类准备不同颜色的数据
-    cluster_colors = {0: "#5470c6", 1: "#91cc75", 2: "#fac858"}
-    cluster_data = {}
-    for i, (student_id, score, cluster) in enumerate(zip(student_ids, scores, clusters)):
-        if cluster not in cluster_data:
-            cluster_data[cluster] = {"students": [], "scores": []}
-        cluster_data[cluster]["students"].append(student_id)
-        cluster_data[cluster]["scores"].append(score)
-    
+    # 1. 成绩与趋势对比图
     bar = Bar({"width": "100%", "height": "400px"})
     bar.add_xaxis(student_ids)
-    bar.add_yaxis("学生成绩", scores)
+    bar.add_yaxis("最近分数", latest_scores)
+    bar.add_yaxis("历史平均分", historical_avg_scores)
     bar.set_global_opts(
-        title_opts=opts.TitleOpts(title="学生成绩分布（聚类分析）"),
+        title_opts=opts.TitleOpts(title="学生分数与历史趋势对比"),
         datazoom_opts=opts.DataZoomOpts(type_="inside"),
     )
 
     # 2. 综合风险等级分布饼图
-    risk_counts = {"High Risk": 0, "Medium Risk": 0, "Low Risk": 0}
-    for warning in comprehensive_warnings:
-        risk_counts[warning] += 1
-    
-    pie_data = [(k, v) for k, v in risk_counts.items() if v > 0]
+    pie_data = [(k, v) for k, v in risk_stats.items() if v > 0]
     pie = (
         Pie({"width": "100%", "height": "400px"})
         .add("", pie_data)
@@ -165,15 +173,81 @@ def show_results(job_id):
     page = Page(layout=Page.SimplePageLayout)
     page.add(bar, pie, cluster_pie)
     
+    current_user = auth_manager.get_current_user()
     return render_template(
         'results.html', 
         charts_html=page.render_embed(),
         high_risk_students=high_risk_students,
         medium_risk_students=medium_risk_students,
-        total_students=len(rows),
-        job_id=job_id
+        all_students_data=results,
+        total_students=len(results),
+        user_id=user_id,
+        username=current_user['username']
     )
+
+# --- 认证相关路由 ---
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """用户登录"""
+    # 如果已经登录，直接跳转到主页
+    if auth_manager.is_authenticated():
+        return redirect(url_for('index'))
+    
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        
+        if not username or not password:
+            flash('请输入用户名和密码', 'error')
+            return render_template('login.html')
+        
+        success, user = auth_manager.login_user(username, password)
+        if success:
+            flash(f'欢迎回来，{user["username"]}！', 'success')
+            return redirect(url_for('index'))
+        else:
+            flash('用户名或密码错误', 'error')
+    
+    return render_template('login.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    """用户注册"""
+    # 如果已经登录，直接跳转到主页
+    if auth_manager.is_authenticated():
+        return redirect(url_for('index'))
+    
+    if request.method == 'POST':
+        username = request.form.get('username')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        
+        if not all([username, email, password, confirm_password]):
+            flash('请填写所有字段', 'error')
+            return render_template('register.html')
+        
+        if password != confirm_password:
+            flash('两次输入的密码不一致', 'error')
+            return render_template('register.html')
+        
+        success, result = auth_manager.register_user(username, email, password)
+        if success:
+            flash('注册成功！请登录', 'success')
+            return redirect(url_for('login'))
+        else:
+            flash(result, 'error')
+    
+    return render_template('register.html')
+
+@app.route('/logout')
+def logout():
+    """用户登出"""
+    auth_manager.logout_user()
+    flash('已成功登出', 'info')
+    return redirect(url_for('login'))
 
 if __name__ == '__main__':
     # 确保在局域网内可访问
-    app.run(host='0.0.0.0', port=5010, debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)

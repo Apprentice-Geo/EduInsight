@@ -65,3 +65,8 @@ dist/
 *.tmp
 *.bak
 *.swp
+
+# Sample data files
+sample_data/
+*.csv
+*.tsv

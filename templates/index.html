@@ -2,53 +2,175 @@
 <html lang="zh">
   <head>
     <meta charset="UTF-8" />
-    <title>学情预警分析系统 MVP</title>
+    <title>学情预警分析系统</title>
     <style>
       body {
-        font-family: sans-serif;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
         max-width: 800px;
         margin: auto;
         padding: 20px;
+        background: #f8f9fa;
       }
-      h1 {
-        color: #333;
-      }
-      form {
-        background: #f4f4f4;
+      .header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
         padding: 20px;
-        border-radius: 8px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
       }
-      input[type="file"] {
+      .header h1 {
+        color: #333;
+        margin: 0;
+        font-size: 28px;
+      }
+      .user-info {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+      }
+      .user-name {
+        color: #666;
+        font-weight: bold;
+      }
+      .logout-btn {
+        background: #dc3545;
+        color: white;
+        padding: 8px 15px;
+        text-decoration: none;
+        border-radius: 6px;
+        font-size: 14px;
+        transition: background-color 0.3s;
+      }
+      .logout-btn:hover {
+        background: #c82333;
+      }
+      .upload-section {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .upload-section h2 {
+        color: #333;
         margin-bottom: 20px;
       }
-      input[type="submit"] {
-        background: #007bff;
-        color: white;
-        padding: 10px 15px;
-        border: none;
-        border-radius: 4px;
+      .form-group {
+        margin-bottom: 25px;
+      }
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: bold;
+        color: #555;
+      }
+      input[type="file"] {
+        width: 100%;
+        padding: 12px;
+        border: 2px dashed #ddd;
+        border-radius: 8px;
+        background: #fafafa;
         cursor: pointer;
+        transition: border-color 0.3s;
+      }
+      input[type="file"]:hover {
+        border-color: #007bff;
+      }
+      input[type="submit"] {
+        width: 100%;
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        padding: 15px;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+        font-weight: bold;
+        transition: transform 0.2s;
+      }
+      input[type="submit"]:hover {
+        transform: translateY(-2px);
+      }
+      .flash-messages {
+        margin-bottom: 20px;
+      }
+      .flash-message {
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 10px;
+        font-weight: bold;
+      }
+      .flash-error {
+        background: #fee;
+        color: #c33;
+        border: 2px solid #fcc;
+      }
+      .flash-success {
+        background: #efe;
+        color: #363;
+        border: 2px solid #cfc;
+      }
+      .flash-info {
+        background: #eef;
+        color: #336;
+        border: 2px solid #ccf;
+      }
+      .description {
+        color: #666;
+        margin-bottom: 20px;
+        line-height: 1.6;
       }
     </style>
   </head>
   <body>
-    <h1>上传数据文件进行分析</h1>
-    <p>请分别上传学生的行为日志和成绩单文件。</p>
-    <form action="/upload" method="post" enctype="multipart/form-data">
-      <label for="logs_file"><b>学习行为日志 (action_logs.csv):</b></label
-      ><br />
-      <input type="file" name="logs_file" id="logs_file" required /><br /><br />
+    <div class="header">
+      <h1>🎓 学情预警分析系统</h1>
+      <div class="user-info">
+        <span class="user-name">欢迎，{{ username }}！</span>
+        <a href="{{ url_for('logout') }}" class="logout-btn">登出</a>
+      </div>
+    </div>
 
-      <label for="scores_file"><b>测验成绩单 (quiz_scores.csv):</b></label
-      ><br />
-      <input
-        type="file"
-        name="scores_file"
-        id="scores_file"
-        required
-      /><br /><br />
+    <div class="flash-messages">
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %} {% for category, message in messages %}
+      <div class="flash-message flash-{{ category }}">{{ message }}</div>
+      {% endfor %} {% endif %} {% endwith %}
+    </div>
 
-      <input type="submit" value="开始分析" />
-    </form>
+    <div class="upload-section">
+      <h2>📊 上传数据文件进行分析</h2>
+      <p class="description">
+        请分别上传学生的学习行为日志和测验成绩单文件，系统将自动进行智能分析并生成预警报告。
+      </p>
+
+      <form action="/upload" method="post" enctype="multipart/form-data">
+        <div class="form-group">
+          <label for="logs_file">📝 学习行为日志 (action_logs.csv):</label>
+          <input
+            type="file"
+            name="logs_file"
+            id="logs_file"
+            accept=".csv"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="scores_file">📋 测验成绩单 (quiz_scores.csv):</label>
+          <input
+            type="file"
+            name="scores_file"
+            id="scores_file"
+            accept=".csv"
+            required
+          />
+        </div>
+
+        <input type="submit" value="🚀 开始分析" />
+      </form>
+    </div>
   </body>
 </html>
