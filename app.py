@@ -3,7 +3,8 @@ import os
 import subprocess
 import time
 from pyecharts import options as opts
-from pyecharts.charts import Bar, Pie, Page
+from pyecharts.charts import Bar, Pie, Page, Scatter
+from pyecharts.commons.utils import JsCode
 
 # 导入新的模块
 from config import Config
@@ -165,23 +166,73 @@ def show_results(user_id):
         .set_series_opts(label_opts=opts.LabelOpts(formatter="{b}: {c}"))
     )
     
-    # 3. 聚类分布饼图
-    cluster_counts = {}
-    for cluster in clusters:
-        cluster_name = f"聚类 {cluster}"
-        cluster_counts[cluster_name] = cluster_counts.get(cluster_name, 0) + 1
+    # 3. 聚类散点图
+    # 定义更有意义的聚类名称
+    cluster_names = {
+        0: "优秀学习者",
+        1: "普通学习者", 
+        2: "需要关注学习者"
+    }
     
-    cluster_pie_data = list(cluster_counts.items())
-    cluster_pie = (
-        Pie({"width": "100%", "height": "400px"})
-        .add("", cluster_pie_data)
-        .set_global_opts(title_opts=opts.TitleOpts(title="学生聚类分布"))
-        .set_series_opts(label_opts=opts.LabelOpts(formatter="{b}: {c}"))
+    # 准备散点图数据
+    scatter_data = []
+    for i, (score, actions, cluster) in enumerate(zip(latest_scores, [item['total_actions'] for item in results], clusters)):
+        cluster_name = cluster_names.get(cluster, f"聚类{cluster}")
+        scatter_data.append([score, actions, cluster_name, student_ids[i]])
+    
+    # 按聚类分组数据
+    cluster_scatter_data = {}
+    for data_point in scatter_data:
+        cluster_name = data_point[2]
+        if cluster_name not in cluster_scatter_data:
+            cluster_scatter_data[cluster_name] = []
+        cluster_scatter_data[cluster_name].append([data_point[0], data_point[1], data_point[3]])  # [score, actions, student_id]
+    
+    # 创建散点图
+    scatter = Scatter({"width": "100%", "height": "400px"})
+    
+    # 为每个聚类添加数据系列
+    colors = ["#2ca02c", "#ff7f0e", "#d62728"]  # 绿色、橙色、红色
+    
+    # 添加空的x轴数据以初始化散点图
+    scatter.add_xaxis([])
+    
+    for i, (cluster_name, data) in enumerate(cluster_scatter_data.items()):
+        scatter.add_yaxis(
+            cluster_name,
+            data,  # 直接传入[x, y]坐标点列表
+            symbol_size=10,
+            label_opts=opts.LabelOpts(is_show=False),  # 隐藏点旁边的数字标签
+            itemstyle_opts=opts.ItemStyleOpts(color=colors[i % len(colors)])
+        )
+    
+    scatter.set_global_opts(
+        title_opts=opts.TitleOpts(title="学生学习行为聚类分析"),
+        xaxis_opts=opts.AxisOpts(
+            name="最近分数",
+            name_location="middle",
+            name_gap=30,
+            type_="value"  # 设置为数值轴
+        ),
+        yaxis_opts=opts.AxisOpts(
+            name="学习活动次数",
+            name_location="middle",
+            name_gap=40,
+            type_="value"  # 设置为数值轴
+        ),
+        tooltip_opts=opts.TooltipOpts(
+            formatter=JsCode("""
+                function(params){
+                    return params.seriesName + '<br/>' + '学生ID: ' + params.data[2] + '<br/>最近分数: ' + params.data[0] + '<br/>活动次数: ' + params.data[1];
+                }
+            """)
+        ),
+        legend_opts=opts.LegendOpts(pos_top="5%")
     )
 
     # 使用Page布局来组合图表
     page = Page(layout=Page.SimplePageLayout)
-    page.add(bar, pie, cluster_pie)
+    page.add(bar, pie, scatter)
     
     current_user = auth_manager.get_current_user()
     return render_template(

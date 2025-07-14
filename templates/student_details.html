@@ -293,7 +293,17 @@
               <td>{{ "%.2f"|format(student.score_trend) }}</td>
               <td>{{ student.total_actions }}</td>
               <td>{{ '是' if student.is_procrastinator == 1 else '否' }}</td>
-              <td>聚类 {{ student.cluster }}</td>
+              <td>
+                {% if student.cluster == 0 %}
+                优秀学习者
+                {% elif student.cluster == 1 %}
+                普通学习者
+                {% elif student.cluster == 2 %}
+                需要关注学习者
+                {% else %}
+                聚类 {{ student.cluster }}
+                {% endif %}
+              </td>
               <td>
                 {% if student.comprehensive_warning == 'High Risk' %}
                 <span style="font-weight: bold; color: #d32f2f"
