@@ -70,3 +70,6 @@ dist/
 sample_data/
 *.csv
 *.tsv
+
+# Check Script
+check/

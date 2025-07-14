@@ -41,7 +41,7 @@ def analyze(user_id, db_path):
         
         # 5. 机器学习分析
         print("机器学习分析...")
-        clustered_df, kmeans_model = MLAnalyzer.perform_kmeans_clustering(scaled_df)
+        clustered_df, kmeans_model, cluster_mapping = MLAnalyzer.perform_kmeans_clustering(scaled_df)
         pca_df, pca_model = MLAnalyzer.perform_pca_analysis(scaled_df)
         anomaly_students = MLAnalyzer.detect_anomalies(final_data_df, numeric_cols)
         
@@ -80,6 +80,31 @@ def analyze(user_id, db_path):
         conn = sqlite3.connect(db_path)
         table_name = f"user_{user_id}"
         pandas_df.to_sql(name=table_name, con=conn, if_exists="replace", index=False)
+        
+        # 保存聚类映射信息
+        import json
+        import pandas as pd
+        metadata_table = f"metadata_{user_id}"
+        
+        # 检查metadata表是否存在，如果存在则更新cluster_mapping字段
+        cursor = conn.cursor()
+        cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{metadata_table}'")
+        table_exists = cursor.fetchone() is not None
+        
+        if table_exists:
+            # 更新现有表的cluster_mapping字段
+            cluster_mapping_json = json.dumps(cluster_mapping, ensure_ascii=False)
+            cursor.execute(f"UPDATE {metadata_table} SET cluster_mapping = ?", (cluster_mapping_json,))
+            conn.commit()
+        else:
+            # 创建新的metadata表
+            metadata_df = pd.DataFrame([{
+                'user_id': user_id,
+                'analysis_type': 'clustering',
+                'cluster_mapping': json.dumps(cluster_mapping, ensure_ascii=False)
+            }])
+            metadata_df.to_sql(name=metadata_table, con=conn, if_exists="replace", index=False)
+        
         conn.close()
         
         print("分析完成，结果已保存到数据库。")

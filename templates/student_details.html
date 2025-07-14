@@ -294,15 +294,7 @@
               <td>{{ student.total_actions }}</td>
               <td>{{ '是' if student.is_procrastinator == 1 else '否' }}</td>
               <td>
-                {% if student.cluster == 0 %}
-                优秀学习者
-                {% elif student.cluster == 1 %}
-                普通学习者
-                {% elif student.cluster == 2 %}
-                需要关注学习者
-                {% else %}
-                聚类 {{ student.cluster }}
-                {% endif %}
+                {{ cluster_names.get(student.cluster, '聚类 ' + student.cluster|string) }}
               </td>
               <td>
                 {% if student.comprehensive_warning == 'High Risk' %}

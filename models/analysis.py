@@ -93,3 +93,40 @@ class AnalysisResult:
         except Exception as e:
             print(f"Error checking table existence: {e}")
             return False
+    
+    def get_cluster_mapping(self, user_id):
+        """获取用户的动态聚类映射"""
+        metadata_table = f"metadata_{user_id}"
+        
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            
+            # 检查元数据表是否存在
+            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (metadata_table,))
+            if not cursor.fetchone():
+                conn.close()
+                # 返回默认映射
+                return {0: "聚类0", 1: "聚类1", 2: "聚类2"}
+            
+            # 获取聚类映射
+            cursor.execute(f"SELECT cluster_mapping FROM {metadata_table} LIMIT 1")
+            result = cursor.fetchone()
+            conn.close()
+            
+            if result:
+                import json
+                cluster_mapping = json.loads(result[0])
+                # 确保键是整数类型
+                converted_mapping = {}
+                for key, value in cluster_mapping.items():
+                    converted_mapping[int(key)] = value
+                return converted_mapping
+            else:
+                # 返回默认映射
+                return {0: "聚类0", 1: "聚类1", 2: "聚类2"}
+                
+        except Exception as e:
+            print(f"Error getting cluster mapping: {e}")
+            # 返回默认映射
+            return {0: "聚类0", 1: "聚类1", 2: "聚类2"}

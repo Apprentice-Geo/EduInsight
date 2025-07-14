@@ -167,12 +167,8 @@ def show_results(user_id):
     )
     
     # 3. 聚类散点图
-    # 定义更有意义的聚类名称
-    cluster_names = {
-        0: "优秀学习者",
-        1: "普通学习者", 
-        2: "需要关注学习者"
-    }
+    # 获取动态聚类映射
+    cluster_names = analysis_model.get_cluster_mapping(user_id)
     
     # 准备散点图数据
     scatter_data = []
@@ -265,6 +261,9 @@ def student_details(user_id):
     high_risk_students = [item for item in results if item['comprehensive_warning'] == 'High Risk']
     medium_risk_students = [item for item in results if item['comprehensive_warning'] == 'Medium Risk']
     
+    # 获取动态聚类映射
+    cluster_names = analysis_model.get_cluster_mapping(user_id)
+    
     current_user = auth_manager.get_current_user()
     return render_template(
         'student_details.html',
@@ -273,7 +272,8 @@ def student_details(user_id):
         all_students_data=results,
         total_students=len(results),
         user_id=user_id,
-        username=current_user['username']
+        username=current_user['username'],
+        cluster_names=cluster_names
     )
 
 # --- 认证相关路由 ---

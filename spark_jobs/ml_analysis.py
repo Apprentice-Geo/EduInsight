@@ -28,7 +28,11 @@ class MLAnalyzer:
         print("聚类分析结果:")
         cluster_summary.show()
         
-        return clustered_df, kmeans_model
+        # 动态分配聚类标签
+        cluster_mapping = MLAnalyzer._assign_cluster_labels(cluster_summary)
+        print(f"动态聚类标签映射: {cluster_mapping}")
+        
+        return clustered_df, kmeans_model, cluster_mapping
     
     @staticmethod
     def perform_pca_analysis(df, components=None):
@@ -110,3 +114,44 @@ class MLAnalyzer:
         )
         
         return final_warning_df
+    
+    @staticmethod
+    def _assign_cluster_labels(cluster_summary):
+        """根据聚类特征动态分配有意义的标签"""
+        # 收集聚类统计数据
+        cluster_stats = cluster_summary.collect()
+        
+        # 计算综合评分：平均分数权重0.6 + 活动次数权重0.3 - 拖延率权重0.1
+        cluster_scores = []
+        for row in cluster_stats:
+            cluster_id = row['cluster']
+            avg_score = row['avg_score'] or 0
+            avg_actions = row['avg_actions'] or 0
+            procrastination_rate = row['procrastination_rate'] or 0
+            
+            # 标准化分数（假设分数0-100，活动次数0-30）
+            normalized_score = avg_score / 100.0
+            normalized_actions = min(avg_actions / 30.0, 1.0)
+            
+            # 综合评分
+            composite_score = (normalized_score * 0.6 + 
+                             normalized_actions * 0.3 - 
+                             procrastination_rate * 0.1)
+            
+            cluster_scores.append((cluster_id, composite_score, avg_score, avg_actions))
+        
+        # 按综合评分排序
+        cluster_scores.sort(key=lambda x: x[1], reverse=True)
+        
+        # 分配标签
+        cluster_mapping = {}
+        labels = ["优秀学习者", "普通学习者", "需要关注学习者"]
+        
+        for i, (cluster_id, score, avg_score, avg_actions) in enumerate(cluster_scores):
+            if i < len(labels):
+                cluster_mapping[cluster_id] = labels[i]
+                print(f"聚类 {cluster_id}: {labels[i]} (综合评分: {score:.3f}, 平均分: {avg_score:.1f}, 平均活动: {avg_actions:.1f})")
+            else:
+                cluster_mapping[cluster_id] = f"聚类{cluster_id}"
+        
+        return cluster_mapping
