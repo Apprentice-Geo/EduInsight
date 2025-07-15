@@ -1,5 +1,6 @@
 import sqlite3
 from config import Config
+from utils.db_helper import db_helper
 
 class AnalysisResult:
     """分析结果模型类"""
@@ -12,21 +13,26 @@ class AnalysisResult:
         table_name = f"user_{user_id}"
         
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
             # 检查表是否存在
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
-            if not cursor.fetchone():
-                conn.close()
+            table_check = db_helper.execute_query(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name=?", 
+                (table_name,), 
+                fetch_one=True
+            )
+            if not table_check:
                 return None
             
-            # 获取所有结果
-            cursor.execute(f"SELECT * FROM {table_name}")
-            columns = [description[0] for description in cursor.description]
-            results = cursor.fetchall()
+            results = db_helper.execute_query(
+                f"SELECT * FROM {table_name}",
+                fetch_all=True
+            )
             
-            conn.close()
+            # 获取列名
+            columns_info = db_helper.execute_query(
+                f"PRAGMA table_info({table_name})",
+                fetch_all=True
+            )
+            columns = [row[1] for row in columns_info]
             
             # 转换为字典列表
             return [dict(zip(columns, row)) for row in results]
@@ -40,19 +46,14 @@ class AnalysisResult:
         table_name = f"user_{user_id}"
         
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
-            cursor.execute(f"""
-                SELECT 
+            risk_stats = db_helper.execute_query(
+                f"""SELECT 
                     comprehensive_warning,
                     COUNT(*) as count
                 FROM {table_name} 
-                GROUP BY comprehensive_warning
-            """)
-            
-            risk_stats = cursor.fetchall()
-            conn.close()
+                GROUP BY comprehensive_warning""",
+                fetch_all=True
+            )
             
             stats = {}
             for warning_level, count in risk_stats:
@@ -69,11 +70,7 @@ class AnalysisResult:
         table_name = f"user_{user_id}"
         
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            cursor.execute(f"DROP TABLE IF EXISTS {table_name}")
-            conn.commit()
-            conn.close()
+            db_helper.execute_query(f"DROP TABLE IF EXISTS {table_name}")
             return True
         except Exception as e:
             print(f"Error clearing user results: {e}")
@@ -84,12 +81,12 @@ class AnalysisResult:
         table_name = f"user_{user_id}"
         
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
-            exists = cursor.fetchone() is not None
-            conn.close()
-            return exists
+            result = db_helper.execute_query(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name=?", 
+                (table_name,), 
+                fetch_one=True
+            )
+            return result is not None
         except Exception as e:
             print(f"Error checking table existence: {e}")
             return False
@@ -99,18 +96,19 @@ class AnalysisResult:
         table_name = f"user_{user_id}"
         
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
             # 检查用户表是否存在
-            cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name=?", (table_name,))
-            if not cursor.fetchone():
-                conn.close()
+            table_check = db_helper.execute_query(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name=?", 
+                (table_name,), 
+                fetch_one=True
+            )
+            if not table_check:
                 # 返回默认映射
                 return {0: "聚类0", 1: "聚类1", 2: "聚类2"}
             
             # 获取聚类统计信息
-            cursor.execute(f"""
+            cluster_stats = db_helper.execute_query(
+                f"""
                 SELECT 
                     cluster,
                     COUNT(*) as cluster_size,
@@ -119,10 +117,9 @@ class AnalysisResult:
                     AVG(is_procrastinator) as procrastination_rate
                 FROM {table_name} 
                 GROUP BY cluster
-            """)
-            
-            cluster_stats = cursor.fetchall()
-            conn.close()
+                """,
+                fetch_all=True
+            )
             
             if not cluster_stats:
                 return {0: "聚类0", 1: "聚类1", 2: "聚类2"}

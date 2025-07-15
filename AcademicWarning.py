@@ -5,6 +5,7 @@ from spark_jobs.data_processor import DataProcessor
 from spark_jobs.feature_engineering import FeatureEngineer
 from spark_jobs.ml_analysis import MLAnalyzer
 from config import Config
+from utils.db_helper import db_helper
 
 def analyze(user_id, db_path):
     """
@@ -67,7 +68,7 @@ def analyze(user_id, db_path):
         print("聚类与风险等级关联分析:")
         cluster_risk_analysis.show()
 
-        # 8. 保存结果到SQLite
+        # 8. 保存结果到SQLite (使用WAL模式)
         print(f"保存结果到SQLite数据库: {db_path}")
         result_df = final_warning_df.select(
             "student_id", "latest_score", "historical_avg_score", "score_trend", 
@@ -77,7 +78,8 @@ def analyze(user_id, db_path):
         
         pandas_df = result_df.toPandas()
         
-        conn = sqlite3.connect(db_path)
+        # 使用WAL模式的数据库连接
+        conn = db_helper.get_connection()
         table_name = f"user_{user_id}"
         pandas_df.to_sql(name=table_name, con=conn, if_exists="replace", index=False)
         

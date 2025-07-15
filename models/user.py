@@ -2,6 +2,7 @@ import sqlite3
 import hashlib
 import secrets
 from config import Config
+from utils.db_helper import db_helper
 
 class User:
     """用户模型类"""
@@ -12,7 +13,7 @@ class User:
     
     def init_database(self):
         """初始化用户相关的数据库表"""
-        conn = sqlite3.connect(self.db_path)
+        conn = db_helper.get_connection()
         cursor = conn.cursor()
         
         cursor.execute('''
@@ -56,18 +57,18 @@ class User:
     def create_user(self, username, email, password, role='teacher'):
         """创建新用户"""
         try:
-            conn = sqlite3.connect(self.db_path)
-            cursor = conn.cursor()
-            
             password_hash = self.hash_password(password)
-            cursor.execute(
+            result = db_helper.execute_query(
                 "INSERT INTO users (username, email, password_hash, role) VALUES (?, ?, ?, ?)",
                 (username, email, password_hash, role)
             )
             
-            conn.commit()
-            user_id = cursor.lastrowid
-            conn.close()
+            # 获取新创建用户的ID
+            user_id = db_helper.execute_query(
+                "SELECT last_insert_rowid();",
+                fetch_one=True
+            )[0]
+            
             return user_id
         except sqlite3.IntegrityError as e:
             if "username" in str(e):
@@ -76,18 +77,16 @@ class User:
                 raise ValueError("邮箱已存在")
             else:
                 raise ValueError("创建用户失败")
+        except Exception as e:
+            raise ValueError(f"创建用户时发生错误: {e}")
     
     def authenticate_user(self, username, password):
         """用户认证"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute(
+        user = db_helper.execute_query(
             "SELECT id, username, email, password_hash, role FROM users WHERE username = ? AND is_active = 1",
-            (username,)
+            (username,),
+            fetch_one=True
         )
-        user = cursor.fetchone()
-        conn.close()
         
         if user and self.verify_password(password, user[3]):
             return {
@@ -100,15 +99,11 @@ class User:
     
     def get_user_by_id(self, user_id):
         """根据ID获取用户信息"""
-        conn = sqlite3.connect(self.db_path)
-        cursor = conn.cursor()
-        
-        cursor.execute(
+        user = db_helper.execute_query(
             "SELECT id, username, email, role FROM users WHERE id = ? AND is_active = 1",
-            (user_id,)
+            (user_id,),
+            fetch_one=True
         )
-        user = cursor.fetchone()
-        conn.close()
         
         if user:
             return {
