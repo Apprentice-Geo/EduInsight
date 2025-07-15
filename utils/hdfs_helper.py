@@ -15,8 +15,9 @@ class HDFSHelper:
             # 重试上传
             for attempt in range(Config.HDFS_MAX_RETRIES):
                 try:
+                    # 使用 -f 参数强制覆盖，避免 File exists 错误
                     subprocess.run([
-                        'hdfs', 'dfs', '-put', local_logs_path, 
+                        'hdfs', 'dfs', '-put', '-f', local_logs_path, 
                         f"{hdfs_input_path}/action_logs.csv"
                     ], check=True, timeout=Config.HDFS_TIMEOUT)
                     

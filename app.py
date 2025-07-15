@@ -187,20 +187,46 @@ def show_results(user_id):
     # 创建散点图
     scatter = Scatter({"width": "100%", "height": "400px"})
     
-    # 为每个聚类添加数据系列
-    colors = ["#2ca02c", "#ff7f0e", "#d62728"]  # 绿色、橙色、红色
+    # 为每个聚类添加数据系列 - 颜色对应学习者类型
+    # 优秀学习者：绿色，普通学习者：橙色，需要关注学习者：红色
+    color_mapping = {
+        "优秀学习者": "#2ca02c",  # 绿色
+        "普通学习者": "#ff7f0e",  # 橙色  
+        "需要关注学习者": "#d62728"  # 红色
+    }
+    default_colors = ["#2ca02c", "#ff7f0e", "#d62728"]  # 备用颜色
     
     # 添加空的x轴数据以初始化散点图
     scatter.add_xaxis([])
     
+    # 按固定顺序排列聚类数据，确保图例颜色顺序一致
+    cluster_order = ["优秀学习者", "普通学习者", "需要关注学习者"]
+    
+    for cluster_name in cluster_order:
+        if cluster_name in cluster_scatter_data:
+            data = cluster_scatter_data[cluster_name]
+            color = color_mapping[cluster_name]
+            
+            scatter.add_yaxis(
+                cluster_name,
+                data,  # 直接传入[x, y]坐标点列表
+                symbol_size=10,
+                label_opts=opts.LabelOpts(is_show=False),  # 隐藏点旁边的数字标签
+                itemstyle_opts=opts.ItemStyleOpts(color=color)
+            )
+    
+    # 处理其他可能的聚类（如果有的话）
     for i, (cluster_name, data) in enumerate(cluster_scatter_data.items()):
-        scatter.add_yaxis(
-            cluster_name,
-            data,  # 直接传入[x, y]坐标点列表
-            symbol_size=10,
-            label_opts=opts.LabelOpts(is_show=False),  # 隐藏点旁边的数字标签
-            itemstyle_opts=opts.ItemStyleOpts(color=colors[i % len(colors)])
-        )
+        if cluster_name not in cluster_order:
+            color = default_colors[i % len(default_colors)]
+            
+            scatter.add_yaxis(
+                cluster_name,
+                data,
+                symbol_size=10,
+                label_opts=opts.LabelOpts(is_show=False),
+                itemstyle_opts=opts.ItemStyleOpts(color=color)
+            )
     
     scatter.set_global_opts(
         title_opts=opts.TitleOpts(title="学生学习行为聚类分析"),

@@ -5,58 +5,8 @@
     <title>分析结果 - {{ username }}</title>
     <!-- 引入Pyecharts依赖的ECharts JS库 -->
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.3.3/dist/echarts.min.js"></script>
-    <style>
-      body {
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        max-width: 1200px;
-        margin: auto;
-        padding: 20px;
-        background: #f8f9fa;
-      }
-      .header {
-        background: white;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        margin-bottom: 20px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-      }
-      .header h1 {
-        margin: 0;
-        color: #333;
-        font-size: 28px;
-      }
-      .user-info {
-        color: #666;
-        font-size: 16px;
-      }
-      h1,
-      h2 {
-        color: #333;
-        border-bottom: 2px solid #007bff;
-        padding-bottom: 10px;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 20px;
-      }
-      th,
-      td {
-        border: 1px solid #ddd;
-        padding: 8px;
-        text-align: left;
-      }
-      th {
-        background-color: #f2f2f2;
-      }
-      .high-risk {
-        color: red;
-        font-weight: bold;
-      }
-    </style>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/results.css') }}">
   </head>
   <body>
     <div class="header">

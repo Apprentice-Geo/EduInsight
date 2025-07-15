@@ -70,9 +70,10 @@ class MLAnalyzer:
         if anomaly_conditions:
             anomaly_df = df.select("student_id", *anomaly_conditions)
             # 统计每个学生的异常特征数量
-            anomaly_col_names = [f"{col_name}_anomaly" for col_name in numeric_cols if col_name in ['latest_score', 'total_actions']]
+            # 获取实际创建的异常列名
+            actual_anomaly_cols = [f"{col_name}_anomaly" for col_name in ['latest_score', 'total_actions'] if col_name in numeric_cols]
             
-            anomaly_expressions = [when(col(col_name), 1).otherwise(0) for col_name in anomaly_col_names]
+            anomaly_expressions = [when(col(col_name), 1).otherwise(0) for col_name in actual_anomaly_cols]
             anomaly_count_expr = reduce(add, anomaly_expressions) if anomaly_expressions else lit(0)
             anomaly_summary = anomaly_df.withColumn("anomaly_count", anomaly_count_expr)
             

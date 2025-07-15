@@ -81,29 +81,7 @@ def analyze(user_id, db_path):
         table_name = f"user_{user_id}"
         pandas_df.to_sql(name=table_name, con=conn, if_exists="replace", index=False)
         
-        # 保存聚类映射信息
-        import json
-        import pandas as pd
-        metadata_table = f"metadata_{user_id}"
-        
-        # 检查metadata表是否存在，如果存在则更新cluster_mapping字段
-        cursor = conn.cursor()
-        cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{metadata_table}'")
-        table_exists = cursor.fetchone() is not None
-        
-        if table_exists:
-            # 更新现有表的cluster_mapping字段
-            cluster_mapping_json = json.dumps(cluster_mapping, ensure_ascii=False)
-            cursor.execute(f"UPDATE {metadata_table} SET cluster_mapping = ?", (cluster_mapping_json,))
-            conn.commit()
-        else:
-            # 创建新的metadata表
-            metadata_df = pd.DataFrame([{
-                'user_id': user_id,
-                'analysis_type': 'clustering',
-                'cluster_mapping': json.dumps(cluster_mapping, ensure_ascii=False)
-            }])
-            metadata_df.to_sql(name=metadata_table, con=conn, if_exists="replace", index=False)
+        # 注意：聚类映射不再保存到数据库，而是在需要时动态生成
         
         conn.close()
         
