@@ -168,7 +168,7 @@
   </head>
   <body>
     <div class="header">
-      <h1>📋 学生详细信息</h1>
+      <h1>学生详细信息</h1>
       <div class="user-info"><strong>{{ username }}</strong> 的分析数据</div>
     </div>
 
@@ -177,13 +177,13 @@
         href="{{ url_for('show_results', user_id=user_id) }}"
         class="nav-button"
       >
-        📊 返回图表概览
+        返回图表概览
       </a>
-      <a href="{{ url_for('index') }}" class="nav-button"> 🏠 返回主页 </a>
+      <a href="{{ url_for('index') }}" class="nav-button"> 返回主页 </a>
     </div>
 
     <div class="section">
-      <h2>📈 数据统计概览</h2>
+      <h2>数据统计概览</h2>
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-number">{{ total_students }}</div>
@@ -221,7 +221,7 @@
     </div>
 
     <div class="section">
-      <h2>🔍 学生数据筛选与查看</h2>
+      <h2>学生数据筛选与查看</h2>
 
       <div class="filter-tabs">
         <button class="filter-tab active" onclick="filterStudents('all')">
@@ -242,13 +242,13 @@
         type="text"
         class="search-box"
         id="searchBox"
-        placeholder="🔍 输入学生ID搜索..."
+        placeholder="输入学生ID搜索..."
         onkeyup="searchStudents()"
       />
 
       <div style="margin-bottom: 15px">
         <button class="export-button" onclick="exportToCSV()">
-          📄 导出为CSV
+          导出为CSV
         </button>
         <span style="color: #666; font-size: 14px"
           >当前显示:

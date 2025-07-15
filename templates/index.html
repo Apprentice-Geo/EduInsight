@@ -5,10 +5,11 @@
     <title>学情预警分析系统</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/common.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
+    <script src="{{ url_for('static', filename='js/file-upload.js') }}"></script>
   </head>
   <body>
     <div class="header">
-      <h1>🎓 学情预警分析系统</h1>
+      <h1>学情预警分析系统</h1>
       <div class="user-info">
         <span class="user-name">欢迎，{{ username }}！</span>
         <a href="{{ url_for('logout') }}" class="logout-btn">登出</a>
@@ -23,14 +24,14 @@
     </div>
 
     <div class="upload-section">
-      <h2>📊 上传数据文件进行分析</h2>
+      <h2>上传数据文件进行分析</h2>
       <p class="description">
         请分别上传学生的学习行为日志和测验成绩单文件，系统将自动进行智能分析并生成预警报告。
       </p>
 
       <form action="/upload" method="post" enctype="multipart/form-data">
         <div class="form-group">
-          <label for="logs_file">📝 学习行为日志 (action_logs.csv):</label>
+          <label for="logs_file">学习行为日志:</label>
           <input
             type="file"
             name="logs_file"
@@ -41,7 +42,7 @@
         </div>
 
         <div class="form-group">
-          <label for="scores_file">📋 测验成绩单 (quiz_scores.csv):</label>
+          <label for="scores_file">测验成绩单:</label>
           <input
             type="file"
             name="scores_file"
@@ -51,7 +52,7 @@
           />
         </div>
 
-        <input type="submit" value="🚀 开始分析" />
+        <input type="submit" value="开始分析" />
       </form>
     </div>
   </body>

@@ -26,7 +26,7 @@ function checkStatus() {
         }, 1500);
       } else if (data.status === 'error') {
         document.querySelector('.status-text').innerHTML = 
-          '❌ 分析过程中出现错误，请返回重新上传文件';
+          '分析过程中出现错误，请返回重新上传文件';
       } else {
         // 更新进度
         updateProgress();

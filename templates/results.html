@@ -10,7 +10,7 @@
   </head>
   <body>
     <div class="header">
-      <h1>📊 学情分析报告</h1>
+      <h1>学情分析报告</h1>
       <div class="user-info"><strong>{{ username }}</strong> 的分析结果</div>
     </div>
 
@@ -36,7 +36,7 @@
         margin-bottom: 20px;
       "
     >
-      <h2>📈 智能分析摘要</h2>
+      <h2>智能分析摘要</h2>
       <div
         style="
           display: grid;
@@ -110,7 +110,7 @@
         margin-bottom: 20px;
       "
     >
-      <h2>� 快速操作</h2>
+      <h2>快速操作</h2>
       <div
         style="
           display: grid;
@@ -136,7 +136,7 @@
           onmouseover="this.style.transform='translateY(-3px)'"
           onmouseout="this.style.transform='translateY(0)'"
         >
-          <div style="font-size: 24px; margin-bottom: 5px">📋</div>
+          <div style="font-size: 24px; margin-bottom: 5px">详情</div>
           <div>查看学生详细信息</div>
           <div style="font-size: 12px; opacity: 0.9; margin-top: 5px">
             包含所有学生的详细数据和风险分析
@@ -156,7 +156,7 @@
             box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
           "
         >
-          <div style="font-size: 24px; margin-bottom: 5px">🚨</div>
+          <div style="font-size: 24px; margin-bottom: 5px">高危</div>
           <div>发现 {{ high_risk_students|length }} 名高危学生</div>
           <div style="font-size: 12px; opacity: 0.9; margin-top: 5px">
             需要重点关注和干预
@@ -175,7 +175,7 @@
             box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
           "
         >
-          <div style="font-size: 24px; margin-bottom: 5px">⚠️</div>
+          <div style="font-size: 24px; margin-bottom: 5px">中危</div>
           <div>发现 {{ medium_risk_students|length }} 名中危学生</div>
           <div style="font-size: 12px; opacity: 0.9; margin-top: 5px">
             建议密切观察学习状态
@@ -200,7 +200,7 @@
         "
         onmouseover="this.style.transform='translateY(-2px)'"
         onmouseout="this.style.transform='translateY(0)'"
-        >🏠 返回主页，开始新的分析</a
+        >返回主页，开始新的分析</a
       >
     </div>
   </body>

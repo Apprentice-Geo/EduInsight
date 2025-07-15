@@ -8,24 +8,26 @@
   </head>
   <body>
     <div class="container">
-      <h1>🤖 AI正在分析您的数据...</h1>
+      <h1>正在分析您的数据...</h1>
 
       <div class="user-info">
         <strong>{{ username }}</strong>，您的分析任务已开始
       </div>
 
-      <div class="loader"></div>
+      <div class="loader">
+        <div class="loader-inner"></div>
+      </div>
 
       <div class="status-text">
-        系统正在使用机器学习算法分析学生数据，请稍候片刻...
+        系统正在分析学生数据，请稍候片刻...
       </div>
 
       <div class="progress-steps">
-        <div class="step active">✅ 数据上传完成</div>
-        <div class="step active">🔄 特征提取中...</div>
-        <div class="step">🧠 机器学习分析</div>
-        <div class="step">📊 生成预警报告</div>
-        <div class="step">✨ 分析完成</div>
+        <div class="step completed">数据上传完成</div>
+        <div class="step active">特征提取中...</div>
+        <div class="step">机器学习分析</div>
+        <div class="step">生成预警报告</div>
+        <div class="step">分析完成</div>
       </div>
 
       <p class="status-text">分析完成后将自动跳转到结果页面</p>

@@ -1,25 +1,136 @@
 /* 登录和注册页面样式 */
 body {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 25%, #00d4ff 50%, #0099cc 75%, #4facfe 100%);
+  background-size: 400% 400%;
+  animation: gradientShift 15s ease infinite;
   min-height: 100vh;
   max-width: 400px;
   margin: 100px auto;
   padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 动态渐变动画 */
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* 浮动几何图形背景 */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: 
+    radial-gradient(circle at 20% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+  animation: float 20s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  33% {
+    transform: translateY(-20px) rotate(120deg);
+  }
+  66% {
+    transform: translateY(20px) rotate(240deg);
+  }
+}
+
+/* 装饰性几何元素 */
+body::after {
+  content: '';
+  position: fixed;
+  top: 10%;
+  right: 10%;
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(45deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  border-radius: 50%;
+  animation: pulse 8s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 1;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.2) rotate(180deg);
+    opacity: 0.3;
+  }
 }
 
 .login-container,
 .register-container {
-  background: white;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   padding: 40px;
-  border-radius: 15px;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+  border-radius: 20px;
+  box-shadow: 
+    0 25px 45px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(255, 255, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  z-index: 10;
+  transform: translateY(0);
+  transition: all 0.3s ease;
+}
+
+.login-container:hover,
+.register-container:hover {
+  transform: translateY(-5px);
+  box-shadow: 
+    0 35px 55px rgba(0, 0, 0, 0.15),
+    0 0 0 1px rgba(255, 255, 255, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 h1 {
-  color: #333;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   text-align: center;
   margin-bottom: 30px;
-  font-size: 24px;
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+h1::after {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  border-radius: 2px;
+  opacity: 0.7;
 }
 
 .login-link,
@@ -30,7 +141,7 @@ h1 {
 
 .login-link a,
 .register-link a {
-  color: #667eea;
+  color: #007bff;
   text-decoration: none;
   font-weight: bold;
 }
@@ -38,4 +149,59 @@ h1 {
 .login-link a:hover,
 .register-link a:hover {
   text-decoration: underline;
+  background: linear-gradient(135deg, #007bff, #0056b3);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  body {
+    margin: 50px auto;
+    padding: 15px;
+    max-width: 350px;
+  }
+  
+  .login-container,
+  .register-container {
+    padding: 30px 25px;
+    border-radius: 15px;
+  }
+  
+  h1 {
+    font-size: 24px;
+    margin-bottom: 25px;
+  }
+  
+  body::after {
+    width: 80px;
+    height: 80px;
+    top: 5%;
+    right: 5%;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    margin: 30px auto;
+    padding: 10px;
+    max-width: 320px;
+  }
+  
+  .login-container,
+  .register-container {
+    padding: 25px 20px;
+    border-radius: 12px;
+  }
+  
+  h1 {
+    font-size: 22px;
+    margin-bottom: 20px;
+  }
+  
+  body::after {
+    width: 60px;
+    height: 60px;
+  }
 }

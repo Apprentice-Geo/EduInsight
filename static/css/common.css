@@ -65,7 +65,7 @@ input[type="text"]:focus,
 input[type="email"]:focus,
 input[type="password"]:focus {
   outline: none;
-  border-color: #667eea;
+  border-color: #007bff;
 }
 
 input[type="file"] {
@@ -80,7 +80,7 @@ input[type="file"]:hover {
 
 input[type="submit"] {
   width: 100%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
   color: white;
   padding: 14px;
   border: none;
