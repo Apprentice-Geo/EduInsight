@@ -5,14 +5,14 @@ class Config:
     
     # Flask配置
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'your-secret-key-change-this-in-production'
-    
+
     # Spark配置
-    SPARK_DRIVER_HOST = "198.18.0.1"
+    SPARK_DRIVER_HOST = "192.168.10.102"
     SPARK_APP_NAME = "EduInsight Academic Warning System"
-    
+
     # 路径配置
     UPLOAD_FOLDER = '/tmp/spark_uploads'
-    DB_PATH = "/home/spark/teaching_analysis.db"
+    DB_PATH = "/home/habase/spark/teaching_analysis.db"  # SQLite数据库文件路径
     HDFS_JOB_BASE_PATH = "/user/spark/jobs"
     
     # 文件配置

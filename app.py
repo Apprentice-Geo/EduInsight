@@ -68,13 +68,19 @@ def upload_and_run_spark():
         return redirect(url_for('index'))
 
     # 3. 启动Spark任务
+    env = os.environ.copy()
+    env["PYSPARK_PYTHON"] = "/usr/local/bin/python3.8"
+    env["PYSPARK_DRIVER_PYTHON"] = "/usr/local/bin/python3.8"
+
     spark_submit_cmd = [
         "spark-submit", "--master", "yarn", "--deploy-mode", "client",
         "--conf", f"spark.driver.host={Config.SPARK_DRIVER_HOST}",
+        "--conf", "spark.yarn.appMasterEnv.PYSPARK_PYTHON=/usr/local/bin/python3.8",
+        "--conf", "spark.executorEnv.PYSPARK_PYTHON=/usr/local/bin/python3.8",
         "AcademicWarning.py", user_id, Config.DB_PATH
     ]
     print(f"Executing Spark command for user {username} (ID: {user_id}): {' '.join(spark_submit_cmd)}")
-    subprocess.Popen(spark_submit_cmd)
+    subprocess.Popen(spark_submit_cmd, env=env)
 
     return redirect(url_for('waiting_page', user_id=user_id))
 
